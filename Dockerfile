@@ -1,4 +1,4 @@
-FROM node:current-alpine
+FROM commonlit/commonlit-yarn:trunk
 
 ENV REVIEWDOG_VERSION=v0.11.0
 
