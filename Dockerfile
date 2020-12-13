@@ -1,4 +1,4 @@
-FROM commonlit/commonlit-yarn:trunk
+FROM commonlit/eslint:latest
 
 ENV REVIEWDOG_VERSION=v0.11.0
 
