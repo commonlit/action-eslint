@@ -28,6 +28,9 @@ inputs:
   reviewdog_flags:
     description: 'Additional reviewdog flags'
     default: ''
+  eslint_packages:
+    description: 'Specific packages to install via Yarn. Default is latest ESLint'
+    default: 'eslint'
   eslint_flags:
     description: "flags and args of eslint command. Default: '.'"
     default: '.'

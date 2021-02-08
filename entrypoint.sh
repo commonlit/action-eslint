@@ -5,13 +5,11 @@ ESLINT_FORMATTER='/formatter.js'
 
 cd "${GITHUB_WORKSPACE}/${INPUT_WORKDIR}" || exit 1
 
-if [ ! -f "$(npm bin)/eslint" ]; then
-  npm install --legacy-peer-deps --ignore-scripts --force
-fi
+yarn global add $INPUT_ESLINT_PACKAGES
 
-$(npm bin)/eslint --version
+$(yarn global bin)/eslint --version
 
-$(npm bin)/eslint -f="${ESLINT_FORMATTER}" ${INPUT_ESLINT_FLAGS:-'.'} \
+$(yarn global bin)/eslint -f="${ESLINT_FORMATTER}" ${INPUT_ESLINT_FLAGS:-'.'} \
   | reviewdog -f=rdjson \
       -name="${INPUT_TOOL_NAME}" \
       -reporter="${INPUT_REPORTER:-github-pr-review}" \
