@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:16-alpine
 
 ENV REVIEWDOG_VERSION=v0.11.0
 
