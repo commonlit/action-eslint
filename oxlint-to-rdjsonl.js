@@ -71,4 +71,14 @@ function convertDiagnostic(diagnostic, fileReader) {
   return out;
 }
 
-module.exports = { mapSeverity, extractRuleCode, positionFromOffset, convertDiagnostic };
+function convert(diagnostics, fileReader) {
+  return diagnostics.map((d) => convertDiagnostic(d, fileReader));
+}
+
+module.exports = {
+  mapSeverity,
+  extractRuleCode,
+  positionFromOffset,
+  convertDiagnostic,
+  convert,
+};

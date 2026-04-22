@@ -189,3 +189,22 @@ test('convertDiagnostic: multiple labels -> first label used', () => {
     end: { line: 1, column: 2 },
   });
 });
+
+const { convert } = require('./oxlint-to-rdjsonl');
+
+test('convert: empty array -> empty array', () => {
+  assert.deepEqual(convert([], () => Buffer.from('')), []);
+});
+
+test('convert: maps each diagnostic and preserves order', () => {
+  const diagnostics = [
+    { message: 'a', code: 'p(r1)', severity: 'error', filename: 'f', labels: [] },
+    { message: 'b', code: 'p(r2)', severity: 'warning', filename: 'f', labels: [] },
+  ];
+  const out = convert(diagnostics, () => Buffer.from(''));
+  assert.equal(out.length, 2);
+  assert.equal(out[0].message, 'a');
+  assert.equal(out[0].severity, 'ERROR');
+  assert.equal(out[1].message, 'b');
+  assert.equal(out[1].severity, 'WARNING');
+});
