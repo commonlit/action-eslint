@@ -1,6 +1,6 @@
 name: 'Run oxlint with reviewdog'
 description: '🐶 Run oxlint with reviewdog on pull requests to improve code review experience.'
-author: 'haya14busa (reviewdog)'
+author: 'geoffharcourt (forked from haya14busa [reviewdog])'
 inputs:
   github_token:
     description: 'GITHUB_TOKEN.'
