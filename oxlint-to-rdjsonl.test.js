@@ -116,3 +116,76 @@ test('convertDiagnostic: full mapping of a typical diagnostic', () => {
     source: { name: 'oxlint', url: 'https://oxc.rs/docs/guide/usage/linter.html' },
   });
 });
+
+test('convertDiagnostic: missing labels -> file-level, no range', () => {
+  const out = convertDiagnostic(
+    { message: 'hi', code: 'eslint(x)', severity: 'warning', filename: 'a.js', labels: [] },
+    () => Buffer.from('')
+  );
+  assert.equal(out.location.path, 'a.js');
+  assert.equal(out.location.range, undefined);
+  assert.equal(out.severity, 'WARNING');
+});
+
+test('convertDiagnostic: missing filename -> no location', () => {
+  const out = convertDiagnostic(
+    { message: 'hi', severity: 'error' },
+    () => { throw new Error('should not be called'); }
+  );
+  assert.equal(out.location, undefined);
+});
+
+test('convertDiagnostic: fileReader throws -> file-level, no range', () => {
+  const out = convertDiagnostic(
+    {
+      message: 'hi',
+      severity: 'error',
+      filename: 'missing.js',
+      labels: [{ span: { offset: 0, length: 1 } }],
+    },
+    () => { throw new Error('ENOENT'); }
+  );
+  assert.deepEqual(out.location, { path: 'missing.js' });
+});
+
+test('convertDiagnostic: missing url -> code without url field', () => {
+  const out = convertDiagnostic(
+    {
+      message: 'hi',
+      code: 'eslint(no-var)',
+      severity: 'error',
+      filename: 'a.js',
+      labels: [{ span: { offset: 0, length: 1 } }],
+    },
+    () => Buffer.from('x')
+  );
+  assert.deepEqual(out.code, { value: 'no-var' });
+});
+
+test('convertDiagnostic: missing code -> no code field', () => {
+  const out = convertDiagnostic(
+    { message: 'hi', severity: 'error', filename: 'a.js', labels: [] },
+    () => Buffer.from('')
+  );
+  assert.equal(out.code, undefined);
+});
+
+test('convertDiagnostic: multiple labels -> first label used', () => {
+  const out = convertDiagnostic(
+    {
+      message: 'hi',
+      code: 'eslint(x)',
+      severity: 'error',
+      filename: 'a.js',
+      labels: [
+        { span: { offset: 0, length: 1 } },
+        { span: { offset: 5, length: 2 } },
+      ],
+    },
+    () => Buffer.from('abcdefghij')
+  );
+  assert.deepEqual(out.location.range, {
+    start: { line: 1, column: 1 },
+    end: { line: 1, column: 2 },
+  });
+});
