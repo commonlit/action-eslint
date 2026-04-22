@@ -96,19 +96,31 @@ Pipefail is not enabled (matches current behavior). Reviewdog's exit code is the
 
 Stdin-to-stdout converter. Node built-ins only; no devDeps.
 
-**Input:** oxlint's JSON output — a JSON array of diagnostics rendered by miette's `JSONReportHandler`:
+**Input:** oxlint's JSON output — a top-level object wrapping the diagnostics array:
 
 ```json
 {
-  "message": "...",
-  "code": "eslint(no-unused-vars)",
-  "severity": "error" | "warning" | "advice",
-  "url": "https://oxc.rs/...",
-  "help": "...",
-  "filename": "path/to/file.js",
-  "labels": [{ "span": { "offset": 123, "length": 5 } }]
+  "diagnostics": [
+    {
+      "message": "...",
+      "code": "eslint(no-unused-vars)",
+      "severity": "error" | "warning" | "advice",
+      "url": "https://oxc.rs/...",
+      "help": "...",
+      "filename": "path/to/file.js",
+      "labels": [{ "span": { "offset": 123, "length": 5, "line": 10, "column": 5 } }]
+    }
+  ],
+  "number_of_files": 1,
+  "number_of_rules": 93,
+  "threads_count": 12,
+  "start_time": 0.01
 }
 ```
+
+Note: oxlint's span also includes pre-computed 1-based byte `line`/`column` for the span start, but not for the end. The converter derives start and end positions from `offset`/`length` via file reading (which yields the same values as oxlint's pre-computed start), keeping a single code path that also yields the end position oxlint doesn't emit.
+
+For robustness, the converter accepts either the object form (`{diagnostics: [...]}`) or a bare array.
 
 **Output:** rdjsonl — one JSON object per line:
 

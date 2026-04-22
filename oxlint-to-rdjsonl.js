@@ -84,8 +84,21 @@ function readStdin() {
   });
 }
 
-function readFileSafe(filename) {
-  return require('node:fs').readFileSync(filename);
+function extractDiagnostics(parsed) {
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && Array.isArray(parsed.diagnostics)) return parsed.diagnostics;
+  return null;
+}
+
+function makeCachingFileReader() {
+  const fs = require('node:fs');
+  const cache = new Map();
+  return (filename) => {
+    if (cache.has(filename)) return cache.get(filename);
+    const buf = fs.readFileSync(filename);
+    cache.set(filename, buf);
+    return buf;
+  };
 }
 
 async function main() {
@@ -94,18 +107,19 @@ async function main() {
   if (text === '') {
     return 0;
   }
-  let diagnostics;
+  let parsed;
   try {
-    diagnostics = JSON.parse(text);
+    parsed = JSON.parse(text);
   } catch (err) {
     process.stderr.write(`oxlint-to-rdjsonl: failed to parse oxlint JSON on stdin: ${err.message}\n`);
     return 1;
   }
-  if (!Array.isArray(diagnostics)) {
-    process.stderr.write(`oxlint-to-rdjsonl: expected a JSON array on stdin, got ${typeof diagnostics}\n`);
+  const diagnostics = extractDiagnostics(parsed);
+  if (diagnostics === null) {
+    process.stderr.write(`oxlint-to-rdjsonl: expected an array or { diagnostics: [...] } on stdin\n`);
     return 1;
   }
-  const out = convert(diagnostics, readFileSafe);
+  const out = convert(diagnostics, makeCachingFileReader());
   for (const d of out) {
     process.stdout.write(JSON.stringify(d) + '\n');
   }
@@ -118,6 +132,8 @@ module.exports = {
   positionFromOffset,
   convertDiagnostic,
   convert,
+  extractDiagnostics,
+  makeCachingFileReader,
   main,
 };
 

@@ -260,3 +260,72 @@ test('cli: one diagnostic -> one rdjsonl line', () => {
   assert.equal(parsed.code.value, 'no-unused-vars');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('cli: real oxlint output shape ({ diagnostics: [...], ... }) is accepted', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oxlint-cli-'));
+  const fixture = path.join(tmp, 'sample.js');
+  fs.writeFileSync(fixture, 'var unusedVar = 1;\n');
+  const input = JSON.stringify({
+    diagnostics: [
+      {
+        message: "Variable 'unusedVar' is declared but never used.",
+        code: 'eslint(no-unused-vars)',
+        severity: 'warning',
+        url: 'https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html',
+        filename: fixture,
+        labels: [{ span: { offset: 4, length: 9, line: 1, column: 5 } }],
+      },
+    ],
+    number_of_files: 1,
+    number_of_rules: 93,
+    threads_count: 12,
+    start_time: 0.01,
+  });
+  const r = runCli(input);
+  assert.equal(r.status, 0, r.stderr);
+  const lines = r.stdout.trim().split('\n');
+  assert.equal(lines.length, 1);
+  const parsed = JSON.parse(lines[0]);
+  assert.equal(parsed.severity, 'WARNING');
+  assert.deepEqual(parsed.location.range, {
+    start: { line: 1, column: 5 },
+    end: { line: 1, column: 14 },
+  });
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('cli: garbage object (no diagnostics key) -> exit 1', () => {
+  const r = runCli('{"foo": 1}');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /diagnostics/);
+});
+
+const { extractDiagnostics, makeCachingFileReader } = require('./oxlint-to-rdjsonl');
+
+test('extractDiagnostics: bare array passes through', () => {
+  assert.deepEqual(extractDiagnostics([{ a: 1 }]), [{ a: 1 }]);
+});
+
+test('extractDiagnostics: { diagnostics: [...] } unwraps', () => {
+  assert.deepEqual(extractDiagnostics({ diagnostics: [{ a: 1 }], other: 2 }), [{ a: 1 }]);
+});
+
+test('extractDiagnostics: null for non-matching shapes', () => {
+  assert.equal(extractDiagnostics({ foo: 1 }), null);
+  assert.equal(extractDiagnostics(null), null);
+  assert.equal(extractDiagnostics('string'), null);
+});
+
+test('makeCachingFileReader: reads each file once', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oxlint-cache-'));
+  const p = path.join(tmp, 'x.js');
+  fs.writeFileSync(p, 'abc');
+  const reader = makeCachingFileReader();
+  const first = reader(p);
+  // Mutate the file on disk; cached read should not reflect the change.
+  fs.writeFileSync(p, 'xyz');
+  const second = reader(p);
+  assert.equal(first.toString(), 'abc');
+  assert.equal(second.toString(), 'abc');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
