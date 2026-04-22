@@ -208,3 +208,55 @@ test('convert: maps each diagnostic and preserves order', () => {
   assert.equal(out[1].message, 'b');
   assert.equal(out[1].severity, 'WARNING');
 });
+
+const { spawnSync } = require('node:child_process');
+const path = require('node:path');
+const fs = require('node:fs');
+const os = require('node:os');
+
+const CLI = path.join(__dirname, 'oxlint-to-rdjsonl.js');
+
+function runCli(stdin, cwd = __dirname) {
+  return spawnSync(process.execPath, [CLI], {
+    input: stdin,
+    cwd,
+    encoding: 'utf8',
+  });
+}
+
+test('cli: empty array -> exit 0, empty stdout', () => {
+  const r = runCli('[]');
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, '');
+});
+
+test('cli: invalid JSON -> exit 1, stderr message', () => {
+  const r = runCli('not json');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /invalid|parse/i);
+});
+
+test('cli: one diagnostic -> one rdjsonl line', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'oxlint-cli-'));
+  const fixture = path.join(tmp, 'x.js');
+  fs.writeFileSync(fixture, 'var abc = 1;');
+  const input = JSON.stringify([
+    {
+      message: 'Unused',
+      code: 'eslint(no-unused-vars)',
+      severity: 'error',
+      url: 'https://oxc.rs/x',
+      filename: fixture,
+      labels: [{ span: { offset: 4, length: 3 } }],
+    },
+  ]);
+  const r = runCli(input);
+  assert.equal(r.status, 0, r.stderr);
+  const lines = r.stdout.trim().split('\n');
+  assert.equal(lines.length, 1);
+  const parsed = JSON.parse(lines[0]);
+  assert.equal(parsed.message, 'Unused');
+  assert.deepEqual(parsed.location.range.start, { line: 1, column: 5 });
+  assert.equal(parsed.code.value, 'no-unused-vars');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

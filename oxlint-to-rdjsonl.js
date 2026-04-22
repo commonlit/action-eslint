@@ -75,10 +75,57 @@ function convert(diagnostics, fileReader) {
   return diagnostics.map((d) => convertDiagnostic(d, fileReader));
 }
 
+function readStdin() {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    process.stdin.on('data', (c) => chunks.push(c));
+    process.stdin.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    process.stdin.on('error', reject);
+  });
+}
+
+function readFileSafe(filename) {
+  return require('node:fs').readFileSync(filename);
+}
+
+async function main() {
+  const raw = await readStdin();
+  const text = raw.trim();
+  if (text === '') {
+    return 0;
+  }
+  let diagnostics;
+  try {
+    diagnostics = JSON.parse(text);
+  } catch (err) {
+    process.stderr.write(`oxlint-to-rdjsonl: failed to parse oxlint JSON on stdin: ${err.message}\n`);
+    return 1;
+  }
+  if (!Array.isArray(diagnostics)) {
+    process.stderr.write(`oxlint-to-rdjsonl: expected a JSON array on stdin, got ${typeof diagnostics}\n`);
+    return 1;
+  }
+  const out = convert(diagnostics, readFileSafe);
+  for (const d of out) {
+    process.stdout.write(JSON.stringify(d) + '\n');
+  }
+  return 0;
+}
+
 module.exports = {
   mapSeverity,
   extractRuleCode,
   positionFromOffset,
   convertDiagnostic,
   convert,
+  main,
 };
+
+if (require.main === module) {
+  main()
+    .then((code) => process.exit(code))
+    .catch((err) => {
+      process.stderr.write(`oxlint-to-rdjsonl: ${err.stack || err.message}\n`);
+      process.exit(1);
+    });
+}
