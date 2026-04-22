@@ -1,17 +1,9 @@
 {
   "name": "action-eslint-subproject",
   "version": "1.0.0",
-  "description": "A test subprojet for testing reviewdog/action-eslint",
-  "main": "index.js",
-  "dependencies": {
-  },
+  "description": "A test subproject for testing reviewdog/action-eslint",
   "devDependencies": {
-    "eslint": "^8.0.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^11.0.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "eslint-plugin-standard": "^5.0.0"
+    "oxlint": "^1.61.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
