@@ -13,4 +13,21 @@ function extractRuleCode(code) {
   return match ? match[1] : code;
 }
 
-module.exports = { mapSeverity, extractRuleCode };
+// Convert a UTF-8 byte offset into {line, column}, both 1-based.
+// column is a 1-based UTF-8 byte position within its line (reviewdog's expected encoding).
+function positionFromOffset(buffer, offset) {
+  let line = 1;
+  let column = 1;
+  const end = Math.min(offset, buffer.length);
+  for (let i = 0; i < end; i++) {
+    if (buffer[i] === 0x0A) {
+      line++;
+      column = 1;
+    } else {
+      column++;
+    }
+  }
+  return { line, column };
+}
+
+module.exports = { mapSeverity, extractRuleCode, positionFromOffset };

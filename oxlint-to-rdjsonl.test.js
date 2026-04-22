@@ -39,3 +39,20 @@ test('extractRuleCode: undefined -> undefined', () => {
 test('extractRuleCode: empty string -> empty string', () => {
   assert.equal(extractRuleCode(''), '');
 });
+
+const { positionFromOffset } = require('./oxlint-to-rdjsonl');
+
+test('positionFromOffset: offset 0 -> line 1, column 1', () => {
+  const buf = Buffer.from('abc');
+  assert.deepEqual(positionFromOffset(buf, 0), { line: 1, column: 1 });
+});
+
+test('positionFromOffset: middle of first line', () => {
+  const buf = Buffer.from('abcdef');
+  assert.deepEqual(positionFromOffset(buf, 3), { line: 1, column: 4 });
+});
+
+test('positionFromOffset: end-of-single-line buffer', () => {
+  const buf = Buffer.from('abc');
+  assert.deepEqual(positionFromOffset(buf, 3), { line: 1, column: 4 });
+});
