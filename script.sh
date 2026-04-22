@@ -10,19 +10,28 @@ echo '::group::🐶 Installing reviewdog ... https://github.com/reviewdog/review
 curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/fd59714416d6d9a1c0692d872e38e7f8448df4fc/install.sh | sh -s -- -b "${TEMP_PATH}" "${REVIEWDOG_VERSION}" 2>&1
 echo '::endgroup::'
 
-npx --no-install -c 'oxlint --version' 2>/dev/null
-if [ $? -ne 0 ]; then
+# Resolve oxlint once, preferring a pre-installed binary over touching the
+# package manager. Only fall back to `npm install` when the consumer
+# project has no oxlint on PATH and no ./node_modules/.bin/oxlint — this
+# avoids breaking pnpm / yarn / monorepo setups where `npm install` would
+# reject workspace protocols.
+if command -v oxlint >/dev/null 2>&1; then
+  OXLINT="oxlint"
+elif [ -x "./node_modules/.bin/oxlint" ]; then
+  OXLINT="./node_modules/.bin/oxlint"
+else
   echo '::group:: Running `npm install` to install oxlint ...'
   set -e
   npm install
   set +e
   echo '::endgroup::'
+  OXLINT="npx --no-install oxlint"
 fi
 
-echo "oxlint version:$(npx --no-install -c 'oxlint --version')"
+echo "oxlint version:$($OXLINT --version)"
 
 echo '::group:: Running oxlint with reviewdog 🐶 ...'
-npx --no-install -c "oxlint --format=json ${INPUT_OXLINT_FLAGS:-'.'}" \
+$OXLINT --format=json ${INPUT_OXLINT_FLAGS:-.} \
   | node "${GITHUB_ACTION_PATH}/oxlint-to-rdjsonl.js" \
   | reviewdog -f=rdjsonl \
       -name="${INPUT_TOOL_NAME}" \
