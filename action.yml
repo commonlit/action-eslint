@@ -1,5 +1,5 @@
-name: 'Run eslint with reviewdog'
-description: '🐶 Run eslint with reviewdog on pull requests to improve code review experience.'
+name: 'Run oxlint with reviewdog'
+description: '🐶 Run oxlint with reviewdog on pull requests to improve code review experience.'
 author: 'haya14busa (reviewdog)'
 inputs:
   github_token:
@@ -41,22 +41,18 @@ inputs:
     description: 'Additional reviewdog flags'
     required: false
     default: ''
-  eslint_flags:
-    description: "flags and args of eslint command. Default: '.'"
+  oxlint_flags:
+    description: "flags and args of oxlint command. Default: '.'"
     required: false
     default: '.'
   workdir:
-    description: "The directory from which to look for and run eslint. Default '.'"
+    description: "The directory from which to look for and run oxlint. Default '.'"
     required: false
     default: '.'
   tool_name:
     description: 'Tool name to use for reviewdog reporter'
     required: false
-    default: 'eslint'
-  node_options:
-    description: 'NODE_OPTIONS for running eslint'
-    required: false
-    default: ''
+    default: 'oxlint'
 runs:
   using: 'composite'
   steps:
@@ -64,8 +60,6 @@ runs:
       shell: bash
       env:
         REVIEWDOG_VERSION: v0.21.0
-        # INPUT_<VARIABLE_NAME> is not available in Composite run steps
-        # https://github.community/t/input-variable-name-is-not-available-in-composite-run-steps/127611
         INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
         INPUT_LEVEL: ${{ inputs.level }}
         INPUT_REPORTER: ${{ inputs.reporter }}
@@ -73,10 +67,9 @@ runs:
         INPUT_FAIL_LEVEL: ${{ inputs.fail_level }}
         INPUT_FAIL_ON_ERROR: ${{ inputs.fail_on_error }}
         INPUT_REVIEWDOG_FLAGS: ${{ inputs.reviewdog_flags }}
-        INPUT_ESLINT_FLAGS: ${{ inputs.eslint_flags }}
+        INPUT_OXLINT_FLAGS: ${{ inputs.oxlint_flags }}
         INPUT_WORKDIR: ${{ inputs.workdir }}
         INPUT_TOOL_NAME: ${{ inputs.tool_name }}
-        NODE_OPTIONS: ${{ inputs.node_options }}
 branding:
   icon: 'alert-octagon'
   color: 'blue'
