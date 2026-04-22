@@ -82,3 +82,37 @@ test('positionFromOffset: UTF-8 multi-byte char — columns are byte positions',
   assert.equal(buf.length, 6);
   assert.deepEqual(positionFromOffset(buf, 5), { line: 1, column: 6 });
 });
+
+const { convertDiagnostic } = require('./oxlint-to-rdjsonl');
+
+test('convertDiagnostic: full mapping of a typical diagnostic', () => {
+  const diagnostic = {
+    message: 'Unused variable',
+    code: 'eslint(no-unused-vars)',
+    severity: 'error',
+    url: 'https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html',
+    filename: 'src/foo.js',
+    labels: [{ span: { offset: 4, length: 3 } }],
+  };
+  const fileReader = (path) => {
+    assert.equal(path, 'src/foo.js');
+    return Buffer.from('var abc = 1;');
+  };
+  const out = convertDiagnostic(diagnostic, fileReader);
+  assert.deepEqual(out, {
+    message: 'Unused variable',
+    location: {
+      path: 'src/foo.js',
+      range: {
+        start: { line: 1, column: 5 },
+        end: { line: 1, column: 8 },
+      },
+    },
+    severity: 'ERROR',
+    code: {
+      value: 'no-unused-vars',
+      url: 'https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html',
+    },
+    source: { name: 'oxlint', url: 'https://oxc.rs/docs/guide/usage/linter.html' },
+  });
+});
