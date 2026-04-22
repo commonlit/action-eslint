@@ -56,3 +56,29 @@ test('positionFromOffset: end-of-single-line buffer', () => {
   const buf = Buffer.from('abc');
   assert.deepEqual(positionFromOffset(buf, 3), { line: 1, column: 4 });
 });
+
+test('positionFromOffset: offset on a later line', () => {
+  const buf = Buffer.from('abc\ndef');
+  assert.deepEqual(positionFromOffset(buf, 4), { line: 2, column: 1 });
+});
+
+test('positionFromOffset: offset at newline is end of previous line', () => {
+  const buf = Buffer.from('abc\ndef');
+  assert.deepEqual(positionFromOffset(buf, 3), { line: 1, column: 4 });
+});
+
+test('positionFromOffset: across multiple newlines', () => {
+  const buf = Buffer.from('a\nb\nc');
+  assert.deepEqual(positionFromOffset(buf, 4), { line: 3, column: 1 });
+});
+
+test('positionFromOffset: offset past end clamps to buffer length', () => {
+  const buf = Buffer.from('abc');
+  assert.deepEqual(positionFromOffset(buf, 99), { line: 1, column: 4 });
+});
+
+test('positionFromOffset: UTF-8 multi-byte char — columns are byte positions', () => {
+  const buf = Buffer.from('a🐶b');
+  assert.equal(buf.length, 6);
+  assert.deepEqual(positionFromOffset(buf, 5), { line: 1, column: 6 });
+});
