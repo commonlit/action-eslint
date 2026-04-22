@@ -71,7 +71,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: reviewdog/action-eslint@vX
+      - uses: commonlit/action-eslint@vX
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
@@ -92,7 +92,7 @@ jobs:
         with:
           node-version: "20"
       - run: npm install
-      - uses: reviewdog/action-eslint@vX
+      - uses: commonlit/action-eslint@vX
         with:
           reporter: github-check
           oxlint_flags: "src/"
@@ -114,7 +114,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - uses: reviewdog/action-eslint@vX
+      - uses: commonlit/action-eslint@vX
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-check
