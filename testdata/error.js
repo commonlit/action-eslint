@@ -1,1 +1,1 @@
-🐶 // test for unexpected character
+var unusedVar = 1;

@@ -1,1 +1,1 @@
-// empty
+export const clean = true;
